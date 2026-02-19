@@ -1,0 +1,191 @@
+version: "3.8"
+
+services:
+  article-db-africa:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: articles
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - article-db-africa-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  article-db-antarctica:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: articles
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - article-db-antarctica-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  article-db-asia:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: articles
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - article-db-asia-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  article-db-europe:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: articles
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - article-db-europe-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  article-db-north-america:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: articles
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - article-db-north-america-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  article-db-south-america:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: articles
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - article-db-south-america-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  article-db-oceania:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: articles
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - article-db-oceania-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  article-db-global:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: articles
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - article-db-global-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
+
+
+  article-service:
+    build:
+      context: ./ArticleService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    deploy:
+      replicas: 3
+    depends_on:
+      article-db-africa:
+        condition: service_healthy
+      article-db-antarctica:
+        condition: service_healthy
+      article-db-asia:
+        condition: service_healthy
+      article-db-europe:
+        condition: service_healthy
+      article-db-north-america:
+        condition: service_healthy
+      article-db-south-america:
+        condition: service_healthy
+      article-db-oceania:
+        condition: service_healthy
+      article-db-global:
+        condition: service_healthy
+    networks:
+      - happyheadlines-net
+
+
+
+  load-balancer:
+    image: nginx:alpine
+    ports:
+      - "5000:80"
+    volumes:
+      - ./LoadBalancer/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - article-service
+    networks:
+      - happyheadlines-net
+
+
+
+volumes:
+  article-db-africa-data:
+  article-db-antarctica-data:
+  article-db-asia-data:
+  article-db-europe-data:
+  article-db-north-america-data:
+  article-db-south-america-data:
+  article-db-oceania-data:
+  article-db-global-data:
+
+
+networks:
+  happyheadlines-net:
+    driver: bridge
