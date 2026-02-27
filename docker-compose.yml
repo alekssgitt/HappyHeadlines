@@ -174,6 +174,65 @@ services:
       - happyheadlines-net
 
 
+  profanity-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: profanity
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - profanity-db-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  profanity-service:
+    build:
+      context: ./ProfanityService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "5002:8080"
+    depends_on:
+      profanity-db:
+        condition: service_healthy
+    networks:
+      - happyheadlines-net
+
+  comment-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: comments
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - comment-db-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  comment-service:
+    build:
+      context: ./CommentService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "5001:8080"
+    depends_on:
+      comment-db:
+        condition: service_healthy
+    networks:
+      - happyheadlines-net
 
 volumes:
   article-db-africa-data:
@@ -184,7 +243,8 @@ volumes:
   article-db-south-america-data:
   article-db-oceania-data:
   article-db-global-data:
-
+  profanity-db-data:
+  comment-db-data:
 
 networks:
   happyheadlines-net:
