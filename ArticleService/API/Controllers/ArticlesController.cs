@@ -9,8 +9,17 @@ namespace ArticleService.API.Controllers;
     public class ArticlesController(IArticleService service) : ControllerBase
     {
         
+        private const string CreateArticleRoute = "create-article";
+        private const string GetArticleByIdRoute = "get-article-by-id/{id:guid}";
+        private const string GetAllArticlesRoute = "get-all-articles";
+        private const string UpdateArticleRoute = "update-article/{id:guid}";
+        private const string DeleteArticleRoute = "delete-article/{id:guid}";
+        
+        
+        
         
         [HttpPost]
+        [Route(CreateArticleRoute)]
         public async Task<IActionResult> Create([FromBody] CreateArticleDto dto)
         {
             if (!ModelState.IsValid)
@@ -29,7 +38,8 @@ namespace ArticleService.API.Controllers;
             }
         }
         
-        [HttpGet("{id:guid}")]
+        [HttpGet]
+        [Route(GetArticleByIdRoute)]
         public async Task<IActionResult> GetById(Guid id, [FromQuery] string? continent)
         {
             try
@@ -44,6 +54,7 @@ namespace ArticleService.API.Controllers;
         }
         
         [HttpGet]
+        [Route(GetAllArticlesRoute)]
         public async Task<IActionResult> GetAll([FromQuery] string? continent)
         {
             try
@@ -57,7 +68,8 @@ namespace ArticleService.API.Controllers;
             }
         }
         
-        [HttpPut("{id:guid}")]
+        [HttpPut]
+        [Route(UpdateArticleRoute)]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateArticleDto dto,
             [FromQuery] string? continent)
         {
@@ -72,7 +84,8 @@ namespace ArticleService.API.Controllers;
             }
         }
         
-        [HttpDelete("{id:guid}")]
+        [HttpDelete]
+        [Route(DeleteArticleRoute)]
         public async Task<IActionResult> Delete(Guid id, [FromQuery] string? continent)
         {
             try

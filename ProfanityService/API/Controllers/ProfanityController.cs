@@ -8,7 +8,16 @@ namespace ProfanityService.API.Controllers;
 [Route("api/[controller]")]
 public class ProfanityController(IProfanityService service) : ControllerBase
 {
-    [HttpPost("check")]
+    
+    private const string CheckTextRoute = "check-text";
+    private const string GetAllWordsRoute = "get-all-words";
+    private const string AddWordRoute = "add-word";
+    private const string DeleteWordRoute = "delete-word/{id:guid}";
+    
+    
+    
+    [HttpPost]
+    [Route(CheckTextRoute)]
     public async Task<IActionResult> CheckText([FromBody] CheckTextDto dto)
     {
         if (!ModelState.IsValid)
@@ -18,14 +27,18 @@ public class ProfanityController(IProfanityService service) : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("words")]
+    [HttpGet]
+    [Route(GetAllWordsRoute)]
     public async Task<IActionResult> GetAllWords()
     {
         var words = await service.GetAllWordsAsync();
         return Ok(words);
     }
 
-    [HttpPost("words")]
+    
+    
+    [HttpPost]
+    [Route(AddWordRoute)]
     public async Task<IActionResult> AddWord([FromBody] AddWordDto dto)
     {
         if (!ModelState.IsValid)
@@ -42,7 +55,8 @@ public class ProfanityController(IProfanityService service) : ControllerBase
         }
     }
 
-    [HttpDelete("words/{id:guid}")]
+    [HttpDelete]
+    [Route(DeleteWordRoute)]
     public async Task<IActionResult> DeleteWord(Guid id)
     {
         var deleted = await service.DeleteWordAsync(id);

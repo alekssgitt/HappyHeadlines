@@ -8,7 +8,17 @@ namespace CommentService.API.Controllers;
 [Route("api/[controller]")]
 public class CommentsController(ICommentService service) : ControllerBase
 {
+    
+    private const string CreateCommentRoute = "create-comment";
+    private const string GetCommentByIdRoute = "get-comment-by-id/{id:guid}";
+    private const string GetCommentByArticleIdRoute = "get-comment-by-article-id/{id:guid}";
+    private const string UpdateCommentRoute = "update-article/{id:guid}";
+    private const string DeleteCommentRoute = "delete-article/{id:guid}";
+    
+    
+    
     [HttpPost]
+    [Route(CreateCommentRoute)]
     public async Task<IActionResult> Create([FromBody] CreateCommentDto dto)
     {
         if (!ModelState.IsValid)
@@ -18,28 +28,32 @@ public class CommentsController(ICommentService service) : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = comment.Id }, comment);
     }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet]
+    [Route(GetCommentByIdRoute)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var comment = await service.GetByIdAsync(id);
         return comment is null ? NotFound() : Ok(comment);
     }
 
-    [HttpGet("article/{articleId:guid}")]
+    [HttpGet]
+    [Route(GetCommentByArticleIdRoute)]
     public async Task<IActionResult> GetByArticleId(Guid articleId)
     {
         var comments = await service.GetByArticleIdAsync(articleId);
         return Ok(comments);
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut]
+    [Route(UpdateCommentRoute)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCommentDto dto)
     {
         var updated = await service.UpdateAsync(id, dto);
         return updated is null ? NotFound() : Ok(updated);
     }
 
-    [HttpDelete("{id:guid}")]
+    [HttpDelete]
+    [Route(DeleteCommentRoute)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var deleted = await service.DeleteAsync(id);
