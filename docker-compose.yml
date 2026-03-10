@@ -234,6 +234,61 @@ services:
     networks:
       - happyheadlines-net
 
+  draft-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: drafts
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - draft-db-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  draft-service:
+    build:
+      context: ./DraftService
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Monitoring__Seq__ServerUrl=http://seq:5341
+      - Monitoring__Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+    ports:
+      - "5003:8080"
+    depends_on:
+      draft-db:
+        condition: service_healthy
+      seq:
+        condition: service_started
+      zipkin:
+        condition: service_started
+    networks:
+      - happyheadlines-net
+
+  seq:
+    image: datalust/seq:latest
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "5341:5341"
+      - "8081:80"
+    volumes:
+      - seq-data:/data
+    networks:
+      - happyheadlines-net
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    ports:
+      - "9411:9411"
+    networks:
+      - happyheadlines-net
+
 volumes:
   article-db-africa-data:
   article-db-antarctica-data:
@@ -245,6 +300,8 @@ volumes:
   article-db-global-data:
   profanity-db-data:
   comment-db-data:
+  draft-db-data:
+  seq-data:
 
 networks:
   happyheadlines-net:
