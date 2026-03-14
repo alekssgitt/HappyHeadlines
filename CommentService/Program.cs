@@ -1,5 +1,6 @@
 using CommentService;
 using CommentService.Infrastructure;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,7 +38,9 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger();
 app.UseSwaggerUI();
+app.UseHttpMetrics();
 
 app.MapControllers();
+app.MapMetrics();
 
 app.Run();

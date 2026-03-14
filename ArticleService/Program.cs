@@ -1,6 +1,7 @@
 using ArticleService;
 using ArticleService.Application.Interfaces.Data;
 using Common.Shared.Monitoring;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,7 +49,9 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger();
 app.UseSwaggerUI();
+app.UseHttpMetrics();
 
 app.MapControllers();
+app.MapMetrics();
 
 app.Run();
