@@ -29,6 +29,7 @@ public static class MonitoringExtensions
             .WithTracing(tracing =>
             {
                 tracing
+                    .AddSource("HappyHeadlines.Messaging")
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddZipkinExporter(options => { options.Endpoint = new Uri(zipkinEndpoint); });

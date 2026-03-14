@@ -1,8 +1,10 @@
 using ArticleService;
 using ArticleService.Application.Interfaces.Data;
+using Common.Shared.Monitoring;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddSharedMonitoring("ArticleService");
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
