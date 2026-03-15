@@ -1,9 +1,11 @@
 using CommentService;
 using CommentService.Infrastructure;
+using Common.Shared.Monitoring;
 using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddSharedMonitoring("CommentService");
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

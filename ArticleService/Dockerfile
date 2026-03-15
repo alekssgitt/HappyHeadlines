@@ -1,11 +1,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY ArticleService.csproj .
-RUN dotnet restore
+COPY ["Common.Shared/Common.Shared.csproj", "Common.Shared/"]
+COPY ["ArticleService/ArticleService.csproj", "ArticleService/"]
+RUN dotnet restore "ArticleService/ArticleService.csproj"
 
 COPY . .
-RUN dotnet publish -c Release -o /app/publish
+WORKDIR /src/ArticleService
+RUN dotnet publish "ArticleService.csproj" -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app

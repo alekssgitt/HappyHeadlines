@@ -1,11 +1,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY NewsletterService.csproj .
-RUN dotnet restore
+COPY ["Common.Shared/Common.Shared.csproj", "Common.Shared/"]
+COPY ["NewsletterService/NewsletterService.csproj", "NewsletterService/"]
+RUN dotnet restore "NewsletterService/NewsletterService.csproj"
 
 COPY . .
-RUN dotnet publish -c Release -o /app/publish
+WORKDIR /src/NewsletterService
+RUN dotnet publish "NewsletterService.csproj" -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app

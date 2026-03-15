@@ -1,11 +1,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY ProfanityService.csproj .
-RUN dotnet restore
+COPY ["Common.Shared/Common.Shared.csproj", "Common.Shared/"]
+COPY ["ProfanityService/ProfanityService.csproj", "ProfanityService/"]
+RUN dotnet restore "ProfanityService/ProfanityService.csproj"
 
 COPY . .
-RUN dotnet publish -c Release -o /app/publish
+WORKDIR /src/ProfanityService
+RUN dotnet publish "ProfanityService.csproj" -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app

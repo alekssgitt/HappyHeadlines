@@ -1,8 +1,10 @@
+using Common.Shared.Monitoring;
 using ProfanityService;
 using ProfanityService.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddSharedMonitoring("ProfanityService");
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

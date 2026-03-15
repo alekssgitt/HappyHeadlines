@@ -37,8 +37,8 @@ public static class DependencyResolver
             {
                 HostName = configuration["Queue:Host"] ?? "rabbitmq",
                 Port = int.TryParse(configuration["Queue:Port"], out var port) ? port : 5672,
-                UserName = configuration["Queue:UserName"] ?? "user",
-                Password = configuration["Queue:Password"] ?? "pass",
+                UserName = configuration["Queue:UserName"] ?? "guest",
+                Password = configuration["Queue:Password"] ?? "guest",
                 DispatchConsumersAsync = true
             };
 
