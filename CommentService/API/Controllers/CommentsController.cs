@@ -11,9 +11,9 @@ public class CommentsController(ICommentService service) : ControllerBase
     
     private const string CreateCommentRoute = "create-comment";
     private const string GetCommentByIdRoute = "get-comment-by-id/{id:guid}";
-    private const string GetCommentByArticleIdRoute = "get-comment-by-article-id/{id:guid}";
-    private const string UpdateCommentRoute = "update-article/{id:guid}";
-    private const string DeleteCommentRoute = "delete-article/{id:guid}";
+    private const string GetCommentByArticleIdRoute = "get-comment-by-article-id/{articleId:guid}";
+    private const string UpdateCommentRoute = "update-comment/{id:guid}";
+    private const string DeleteCommentRoute = "delete-comment/{id:guid}";
     
     
     
