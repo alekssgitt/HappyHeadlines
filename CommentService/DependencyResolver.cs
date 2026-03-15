@@ -1,12 +1,15 @@
 using CommentService.Application.Interfaces;
+using CommentService.Application.Interfaces.Caching;
 using CommentService.Application.Interfaces.Data;
 using CommentService.Application.Interfaces.External;
 using CommentService.Infrastructure;
+using CommentService.Infrastructure.Caching;
 using CommentService.Infrastructure.External;
 using CommentService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Polly;
 using Polly.Extensions.Http;
+using StackExchange.Redis;
 
 namespace CommentService;
 
@@ -15,6 +18,7 @@ public static class DependencyResolver
     public static void RegisterCustomServices(this WebApplicationBuilder builder)
     {
         builder.RegisterDbContext();
+        builder.Services.RegisterCache(builder.Configuration);
         builder.Services.RegisterRepositories();
         builder.Services.RegisterServices();
         builder.RegisterProfanityClient();
@@ -28,6 +32,13 @@ public static class DependencyResolver
     private static void RegisterRepositories(this IServiceCollection services)
     {
         services.AddScoped<ICommentRepository, CommentRepository>();
+    }
+
+    private static void RegisterCache(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+            ConnectionMultiplexer.Connect(configuration["Cache:CommentRedis"] ?? "comment-cache:6379"));
+        services.AddSingleton<ICommentCacheService, CommentCacheService>();
     }
 
     private static void RegisterDbContext(this WebApplicationBuilder builder)
