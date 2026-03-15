@@ -61,6 +61,18 @@ public class ArticleRepository(IDatabaseRouter dbRouter) : IArticleRepository
         return results.OrderByDescending(a => a.CreatedAt).ToList();
     }
 
+    public async Task<List<Article>> GetRecentGlobalAsync(int days)
+    {
+        using var db = dbRouter.GetDbContext("global");
+        var threshold = DateTime.UtcNow.AddDays(-days);
+
+        return await db.Articles
+            .AsNoTracking()
+            .Where(a => a.CreatedAt >= threshold)
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync();
+    }
+
     public async Task<Article?> UpdateAsync(Guid id, Action<Article> applyUpdates, string? continent)
     {
         async Task<Article?> TryUpdate(ArticleDbContext db)

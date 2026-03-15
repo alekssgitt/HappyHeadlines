@@ -1,11 +1,15 @@
 using ArticleService.Application.DTO;
+using ArticleService.Application.Interfaces.Caching;
 using ArticleService.Application.Interfaces;
 using ArticleService.Application.Interfaces.Data;
 using ArticleService.Domain;
 
 namespace ArticleService.Application.Services;
 
-public class ArticleService(IArticleRepository repository,ILogger<ArticleService> logger) : IArticleService
+public class ArticleService(
+    IArticleRepository repository,
+    IArticleCacheService cacheService,
+    ILogger<ArticleService> logger) : IArticleService
 {
     
 
@@ -25,6 +29,12 @@ public class ArticleService(IArticleRepository repository,ILogger<ArticleService
         };
 
         await repository.CreateAsync(article, continent);
+
+        if (continent == "global")
+        {
+            await cacheService.SetGlobalArticleAsync(article);
+        }
+
         logger.LogInformation("Article {Id} created in shard '{Continent}'", article.Id, continent);
 
         return article;
@@ -32,11 +42,43 @@ public class ArticleService(IArticleRepository repository,ILogger<ArticleService
 
     public async Task<Article?> GetByIdAsync(Guid id, string? continent)
     {
+        if (string.Equals(continent, "global", StringComparison.OrdinalIgnoreCase))
+        {
+            var cached = await cacheService.GetGlobalArticleByIdAsync(id);
+            if (cached is not null)
+            {
+                cacheService.RecordArticleCacheHit();
+                return cached;
+            }
+
+            cacheService.RecordArticleCacheMiss();
+            var fromDb = await repository.GetByIdAsync(id, "global");
+            if (fromDb is not null)
+                await cacheService.SetGlobalArticleAsync(fromDb);
+
+            return fromDb;
+        }
+
         return await repository.GetByIdAsync(id, continent);
     }
 
     public async Task<List<Article>> GetAllAsync(string? continent)
     {
+        if (string.Equals(continent, "global", StringComparison.OrdinalIgnoreCase))
+        {
+            var cached = await cacheService.GetRecentGlobalArticlesAsync();
+            if (cached is not null)
+            {
+                cacheService.RecordArticleCacheHit();
+                return cached;
+            }
+
+            cacheService.RecordArticleCacheMiss();
+            var fromDb = await repository.GetRecentGlobalAsync(14);
+            await cacheService.SetRecentGlobalArticlesAsync(fromDb);
+            return fromDb;
+        }
+
         return await repository.GetAllAsync(continent);
     }
 
@@ -50,7 +92,13 @@ public class ArticleService(IArticleRepository repository,ILogger<ArticleService
         }, continent);
 
         if (updated is not null)
+        {
+            if (string.Equals(updated.Continent, "global", StringComparison.OrdinalIgnoreCase))
+            {
+                await cacheService.SetGlobalArticleAsync(updated);
+            }
             logger.LogInformation("Article {Id} updated", id);
+        }
 
         return updated;
     }
@@ -60,7 +108,13 @@ public class ArticleService(IArticleRepository repository,ILogger<ArticleService
         var deleted = await repository.DeleteAsync(id, continent);
 
         if (deleted)
+        {
+            if (string.Equals(continent, "global", StringComparison.OrdinalIgnoreCase))
+            {
+                await cacheService.RemoveGlobalArticleAsync(id);
+            }
             logger.LogInformation("Article {Id} deleted", id);
+        }
 
         return deleted;
     }
