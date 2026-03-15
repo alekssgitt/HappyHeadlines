@@ -1,9 +1,12 @@
 using ArticleService.Application.Interfaces;
+using ArticleService.Application.Interfaces.Caching;
 using ArticleService.Application.Interfaces.Data;
+using ArticleService.Infrastructure.Caching;
 using ArticleService.Infrastructure;
 using ArticleService.Infrastructure.Queue;
 using ArticleService.Infrastructure.Repositories;
 using RabbitMQ.Client;
+using StackExchange.Redis;
 
 namespace ArticleService;
 
@@ -13,9 +16,11 @@ public static class DependencyResolver
     {
         builder.Services.RegisterDatabaseRouter(builder.Configuration);
         builder.Services.RegisterQueue(builder.Configuration);
+        builder.Services.RegisterCache(builder.Configuration);
         builder.Services.RegisterRepositories();
         builder.Services.RegisterServices();
         builder.Services.AddHostedService<ArticleQueueConsumer>();
+        builder.Services.AddHostedService<ArticleCachePreloadWorker>();
     }
 
     private static void RegisterServices(this IServiceCollection services)
@@ -26,6 +31,13 @@ public static class DependencyResolver
     private static void RegisterRepositories(this IServiceCollection services)
     {
         services.AddScoped<IArticleRepository, ArticleRepository>();
+    }
+
+    private static void RegisterCache(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+            ConnectionMultiplexer.Connect(configuration["Cache:ArticleRedis"] ?? "article-cache:6379"));
+        services.AddSingleton<IArticleCacheService, ArticleCacheService>();
     }
 
     private static void RegisterDatabaseRouter(this IServiceCollection services, IConfiguration configuration)
