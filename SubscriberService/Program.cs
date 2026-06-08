@@ -1,16 +1,10 @@
-using System;
-using System.Threading;
 using Common.Shared.Monitoring;
-using DraftService;
-using DraftService.Infrastructure;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using SubscriberService;
+using SubscriberService.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddSharedMonitoring("DraftService");
-
+builder.AddSharedMonitoring("SubscriberService");
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -21,22 +15,22 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<DraftDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<SubscriberDbContext>();
     var retries = 5;
     for (var attempt = 1; attempt <= retries; attempt++)
     {
         try
         {
             db.Database.EnsureCreated();
-            app.Logger.LogInformation("DraftDatabase ready");
+            app.Logger.LogInformation("SubscriberDatabase ready");
             break;
         }
         catch (Exception ex)
         {
-            app.Logger.LogWarning(ex, "attempt {Attempt}/{Retries} failed to initialise DraftDatabase",
+            app.Logger.LogWarning(ex, "attempt {Attempt}/{Retries} failed to initialise SubscriberDatabase",
                 attempt, retries);
             if (attempt == retries)
-                app.Logger.LogError("giving up on DraftDatabase after {Retries} attempts", retries);
+                app.Logger.LogError("giving up on SubscriberDatabase after {Retries} attempts", retries);
             else
                 Thread.Sleep(2000);
         }
@@ -45,7 +39,6 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger();
 app.UseSwaggerUI();
-
 app.MapControllers();
 
 app.Run();

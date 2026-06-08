@@ -1,6 +1,8 @@
 services:
   article-db-africa:
     image: postgres:16-alpine
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_DB: articles
       POSTGRES_USER: postgres
@@ -17,6 +19,8 @@ services:
 
   article-db-antarctica:
     image: postgres:16-alpine
+    ports:
+      - "5434:5432"
     environment:
       POSTGRES_DB: articles
       POSTGRES_USER: postgres
@@ -33,6 +37,8 @@ services:
 
   article-db-asia:
     image: postgres:16-alpine
+    ports:
+      - "5435:5432"
     environment:
       POSTGRES_DB: articles
       POSTGRES_USER: postgres
@@ -49,6 +55,8 @@ services:
 
   article-db-europe:
     image: postgres:16-alpine
+    ports:
+      - "5436:5432"
     environment:
       POSTGRES_DB: articles
       POSTGRES_USER: postgres
@@ -65,6 +73,8 @@ services:
 
   article-db-north-america:
     image: postgres:16-alpine
+    ports:
+      - "5437:5432"
     environment:
       POSTGRES_DB: articles
       POSTGRES_USER: postgres
@@ -81,6 +91,8 @@ services:
 
   article-db-south-america:
     image: postgres:16-alpine
+    ports:
+      - "5438:5432"
     environment:
       POSTGRES_DB: articles
       POSTGRES_USER: postgres
@@ -97,6 +109,8 @@ services:
 
   article-db-oceania:
     image: postgres:16-alpine
+    ports:
+      - "5439:5432"
     environment:
       POSTGRES_DB: articles
       POSTGRES_USER: postgres
@@ -113,6 +127,8 @@ services:
 
   article-db-global:
     image: postgres:16-alpine
+    ports:
+      - "5440:5432"
     environment:
       POSTGRES_DB: articles
       POSTGRES_USER: postgres
@@ -185,6 +201,8 @@ services:
 
   profanity-db:
     image: postgres:16-alpine
+    ports:
+      - "5441:5432"
     environment:
       POSTGRES_DB: profanity
       POSTGRES_USER: postgres
@@ -215,6 +233,8 @@ services:
 
   comment-db:
     image: postgres:16-alpine
+    ports:
+      - "5442:5432"
     environment:
       POSTGRES_DB: comments
       POSTGRES_USER: postgres
@@ -248,6 +268,8 @@ services:
 
   draft-db:
     image: postgres:16-alpine
+    ports:
+      - "5443:5432"
     environment:
       POSTGRES_DB: drafts
       POSTGRES_USER: postgres
@@ -369,7 +391,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - Queue__Host=rabbitmq
+      - Queue__SubscriberQueueName=subscriber-queue
       - ArticleService__BaseUrl=http://load-balancer
+      - SubscriberService__BaseUrl=http://subscriber-service
       - Monitoring__Seq__ServerUrl=http://seq:5341
       - Monitoring__Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
     ports:
@@ -383,6 +407,59 @@ services:
         condition: service_started
       load-balancer:
         condition: service_started
+      subscriber-service:
+        condition: service_started
+    networks:
+      - happyheadlines-net
+
+  subscriber-db:
+    image: postgres:16-alpine
+    ports:
+      - "5444:5432"
+    environment:
+      POSTGRES_DB: subscribers
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - subscriber-db-data:/var/lib/postgresql/data
+    networks:
+      - happyheadlines-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  subscriber-service:
+    build:
+      context: .
+      dockerfile: SubscriberService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Queue__Host=rabbitmq
+      - Monitoring__Seq__ServerUrl=http://seq:5341
+      - Monitoring__Zipkin__Endpoint=http://zipkin:9411/api/v2/spans
+      - ReleaseToggles__SubscriberServiceEnabled=true
+    ports:
+      - "5007:8080"
+    depends_on:
+      subscriber-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      seq:
+        condition: service_started
+      zipkin:
+        condition: service_started
+    networks:
+      - happyheadlines-net
+
+  structurizr:
+    image: structurizr/lite
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./structurizr:/usr/local/structurizr
     networks:
       - happyheadlines-net
 
@@ -398,6 +475,7 @@ volumes:
   profanity-db-data:
   comment-db-data:
   draft-db-data:
+  subscriber-db-data:
   seq-data:
 
 networks:

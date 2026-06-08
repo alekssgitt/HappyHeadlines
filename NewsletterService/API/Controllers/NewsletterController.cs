@@ -9,6 +9,7 @@ public class NewsletterController(INewsletterService service) : ControllerBase
 {
     private const string GetDailyPreviewRoute = "daily-preview";
     private const string GetLatestQueuedRoute = "latest-queued";
+    private const string GetSubscribersRoute = "subscribers";
     
     [HttpGet]
     [Route(GetDailyPreviewRoute)]
@@ -24,5 +25,13 @@ public class NewsletterController(INewsletterService service) : ControllerBase
     {
         var articles = service.GetLatestQueuedArticles(count);
         return Ok(articles);
+    }
+
+    [HttpGet]
+    [Route(GetSubscribersRoute)]
+    public async Task<IActionResult> GetSubscribers()
+    {
+        var subscribers = await service.GetAllActiveSubscribersAsync();
+        return Ok(subscribers);
     }
 }

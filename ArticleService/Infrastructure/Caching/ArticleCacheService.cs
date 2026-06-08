@@ -46,7 +46,7 @@ public class ArticleCacheService(IConnectionMultiplexer redis) : IArticleCacheSe
         await db.StringSetAsync(
             RecentGlobalKey,
             JsonSerializer.Serialize(articles, JsonOptions),
-            expiry: TimeSpan.FromHours(1));
+            expiry: TimeSpan.FromMinutes(15));
     }
 
     public async Task RemoveGlobalArticleAsync(Guid id)

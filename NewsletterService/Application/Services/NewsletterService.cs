@@ -7,6 +7,7 @@ namespace NewsletterService.Application.Services;
 
 public class NewsletterService(
     IHttpClientFactory httpClientFactory,
+    ISubscriberClient subscriberClient,
     LatestArticleBuffer buffer,
     ILogger<NewsletterService> logger) : INewsletterService
 {
@@ -31,5 +32,12 @@ public class NewsletterService(
         var latest = buffer.GetLatest(count);
         logger.LogInformation("Loaded {Count} latest queued newsletter articles", latest.Count);
         return latest;
+    }
+
+    public async Task<List<SubscriberDto>> GetAllActiveSubscribersAsync()
+    {
+        var subscribers = await subscriberClient.GetAllActiveSubscribersAsync();
+        logger.LogInformation("Loaded {Count} active subscribers", subscribers.Count);
+        return subscribers;
     }
 }
