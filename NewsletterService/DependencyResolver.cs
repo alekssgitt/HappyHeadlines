@@ -1,3 +1,4 @@
+using Common.Shared.Health;
 using NewsletterService.Application.Interfaces;
 using NewsletterService.Infrastructure.External;
 using NewsletterService.Infrastructure.Queue;
@@ -14,6 +15,12 @@ public static class DependencyResolver
         builder.Services.RegisterQueue(builder.Configuration);
         builder.Services.RegisterHttpClients(builder.Configuration);
         builder.Services.RegisterServices();
+        builder.RegisterHealthChecks();
+    }
+
+    private static void RegisterHealthChecks(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddHealthChecks().AddBasicReadyCheck();
     }
 
     private static void RegisterServices(this IServiceCollection services)

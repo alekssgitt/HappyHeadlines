@@ -1,4 +1,6 @@
 using ArticleService.Application.Interfaces;
+using ArticleService.Infrastructure.Health;
+using Common.Shared.Health;
 using ArticleService.Application.Interfaces.Caching;
 using ArticleService.Application.Interfaces.Data;
 using ArticleService.Infrastructure.Caching;
@@ -21,6 +23,14 @@ public static class DependencyResolver
         builder.Services.RegisterServices();
         builder.Services.AddHostedService<ArticleQueueConsumer>();
         builder.Services.AddHostedService<ArticleCachePreloadWorker>();
+        builder.RegisterHealthChecks();
+    }
+
+    private static void RegisterHealthChecks(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddHealthChecks()
+            .AddLivenessCheck()
+            .AddCheck<ArticleDbReadinessCheck>("article_db", tags: ["ready"]);
     }
 
     private static void RegisterServices(this IServiceCollection services)

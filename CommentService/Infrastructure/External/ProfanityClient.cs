@@ -9,7 +9,7 @@ public class ProfanityClient(HttpClient httpClient, ILogger<ProfanityClient> log
     {
         try
         {
-            var response = await httpClient.PostAsJsonAsync("/api/profanity/check", new { text });
+            var response = await httpClient.PostAsJsonAsync("/api/profanity/check-text", new { text });
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<ProfanityCheckResult>();

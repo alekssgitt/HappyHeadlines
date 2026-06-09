@@ -1,5 +1,6 @@
 using CommentService;
 using CommentService.Infrastructure;
+using Common.Shared.Health;
 using Common.Shared.Monitoring;
 using Prometheus;
 
@@ -44,5 +45,6 @@ app.UseHttpMetrics();
 
 app.MapControllers();
 app.MapMetrics();
+app.MapServiceHealthEndpoints();
 
 app.Run();

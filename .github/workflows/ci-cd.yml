@@ -5,12 +5,23 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      rollback_sha:
+        description: "Redeploy a previous image SHA from GHCR (incident / code-defect rollback)"
+        required: true
+      rollback_only:
+        description: "Skip build and push — pull and deploy the SHA above only"
+        type: boolean
+        default: true
 
 env:
   DOTNET_VERSION: "8.0.x"
+  GHCR_REGISTRY: ghcr.io
 
 jobs:
   build-and-test:
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.rollback_only != 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -42,7 +53,7 @@ jobs:
         run: dotnet publish ${{ matrix.project }} --configuration Release --no-build -o /tmp/publish
 
   docker-delivery:
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: build-and-test
     permissions:
@@ -69,7 +80,9 @@ jobs:
           context: .
           file: ArticleService/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/happyheadlines-article-service:latest
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-article-service:latest
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-article-service:${{ github.sha }}
 
       - name: Build and push CommentService
         uses: docker/build-push-action@v6
@@ -77,7 +90,9 @@ jobs:
           context: .
           file: CommentService/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/happyheadlines-comment-service:latest
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-comment-service:latest
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-comment-service:${{ github.sha }}
 
       - name: Build and push ProfanityService
         uses: docker/build-push-action@v6
@@ -85,7 +100,9 @@ jobs:
           context: .
           file: ProfanityService/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/happyheadlines-profanity-service:latest
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-profanity-service:latest
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-profanity-service:${{ github.sha }}
 
       - name: Build and push DraftService
         uses: docker/build-push-action@v6
@@ -93,7 +110,9 @@ jobs:
           context: .
           file: DraftService/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/happyheadlines-draft-service:latest
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-draft-service:latest
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-draft-service:${{ github.sha }}
 
       - name: Build and push PublisherService
         uses: docker/build-push-action@v6
@@ -101,7 +120,9 @@ jobs:
           context: .
           file: PublisherService/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/happyheadlines-publisher-service:latest
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-publisher-service:latest
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-publisher-service:${{ github.sha }}
 
       - name: Build and push NewsletterService
         uses: docker/build-push-action@v6
@@ -109,7 +130,9 @@ jobs:
           context: .
           file: NewsletterService/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/happyheadlines-newsletter-service:latest
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-newsletter-service:latest
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-newsletter-service:${{ github.sha }}
 
       - name: Build and push SubscriberService
         uses: docker/build-push-action@v6
@@ -117,4 +140,81 @@ jobs:
           context: .
           file: SubscriberService/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/happyheadlines-subscriber-service:latest
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-subscriber-service:latest
+            ghcr.io/${{ github.repository_owner }}/happyheadlines-subscriber-service:${{ github.sha }}
+
+  deploy:
+    name: Deploy + health barrier
+    runs-on: ubuntu-latest
+    needs:
+      - build-and-test
+      - docker-delivery
+    if: |
+      always() &&
+      (needs.build-and-test.result == 'success' || needs.build-and-test.result == 'skipped') &&
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.docker-delivery.result == 'success') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.rollback_only == 'true')
+      )
+    permissions:
+      contents: read
+      packages: read
+
+    env:
+      DEPLOY_SHA: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.rollback_sha || github.sha }}
+      GHCR_OWNER: ${{ github.repository_owner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore last successful deploy SHA
+        uses: actions/cache@v4
+        with:
+          path: .deploy-state
+          key: deploy-state-${{ github.repository }}
+
+      - name: Read previous image SHA
+        id: state
+        run: |
+          if [ -f .deploy-state/last-good-sha ]; then
+            echo "previous_sha=$(cat .deploy-state/last-good-sha)" >> "$GITHUB_OUTPUT"
+            echo "Previous good SHA: $(cat .deploy-state/last-good-sha)"
+          else
+            echo "previous_sha=" >> "$GITHUB_OUTPUT"
+            echo "No previous SHA on record (first deploy)"
+          fi
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy GHCR image and enforce health barrier
+        id: deploy
+        run: |
+          chmod +x scripts/ci/deploy-subscriber.sh
+          GHCR_OWNER="$(echo "$GHCR_OWNER" | tr '[:upper:]' '[:lower:]')"
+          export GHCR_OWNER
+          if ./scripts/ci/deploy-subscriber.sh "$DEPLOY_SHA" "${{ steps.state.outputs.previous_sha }}"; then
+            echo "deploy_outcome=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy_outcome=rolled_back" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+      - name: Mark deploy successful (only after health barrier)
+        if: steps.deploy.outputs.deploy_outcome == 'success'
+        run: |
+          mkdir -p .deploy-state
+          echo "$DEPLOY_SHA" > .deploy-state/last-good-sha
+          echo "Recorded last-good SHA: $DEPLOY_SHA"
+
+      - name: Fast rollback via release toggle
+        if: steps.deploy.outputs.deploy_outcome == 'success'
+        run: |
+          chmod +x scripts/ci/verify-toggle-rollback.sh
+          ./scripts/ci/verify-toggle-rollback.sh

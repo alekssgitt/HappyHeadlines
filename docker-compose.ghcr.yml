@@ -1,0 +1,28 @@
+# Override for CI/CD and production-style deploys — pull immutable images from GHCR.
+# Usage:
+#   export GHCR_OWNER=your-github-user
+#   export IMAGE_TAG=<git-sha>
+#   docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull subscriber-service
+#   docker compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d --no-build subscriber-service
+
+services:
+  article-service:
+    image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER}/happyheadlines-article-service:${IMAGE_TAG}
+
+  comment-service:
+    image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER}/happyheadlines-comment-service:${IMAGE_TAG}
+
+  profanity-service:
+    image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER}/happyheadlines-profanity-service:${IMAGE_TAG}
+
+  draft-service:
+    image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER}/happyheadlines-draft-service:${IMAGE_TAG}
+
+  publisher-service:
+    image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER}/happyheadlines-publisher-service:${IMAGE_TAG}
+
+  newsletter-service:
+    image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER}/happyheadlines-newsletter-service:${IMAGE_TAG}
+
+  subscriber-service:
+    image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER}/happyheadlines-subscriber-service:${IMAGE_TAG}

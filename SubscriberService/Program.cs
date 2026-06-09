@@ -1,3 +1,4 @@
+using Common.Shared.Health;
 using Common.Shared.Monitoring;
 using SubscriberService;
 using SubscriberService.Infrastructure;
@@ -40,5 +41,6 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 app.MapControllers();
+app.MapServiceHealthEndpoints();
 
 app.Run();

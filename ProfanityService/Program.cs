@@ -1,3 +1,4 @@
+using Common.Shared.Health;
 using Common.Shared.Monitoring;
 using ProfanityService;
 using ProfanityService.Infrastructure;
@@ -41,5 +42,6 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.MapControllers();
+app.MapServiceHealthEndpoints();
 
 app.Run();

@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using Common.Shared.Health;
 using Common.Shared.Monitoring;
 using DraftService;
 using DraftService.Infrastructure;
@@ -47,5 +48,6 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.MapControllers();
+app.MapServiceHealthEndpoints();
 
 app.Run();

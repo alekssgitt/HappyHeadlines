@@ -1,3 +1,4 @@
+using Common.Shared.Health;
 using Common.Shared.Monitoring;
 using NewsletterService;
 
@@ -15,5 +16,6 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.MapControllers();
+app.MapServiceHealthEndpoints();
 
 app.Run();

@@ -1,3 +1,4 @@
+using Common.Shared.Health;
 using DraftService.Application.Interfaces;
 using DraftService.Application.Interfaces.Data;
 using DraftService.Infrastructure;
@@ -13,6 +14,14 @@ public static class DependencyResolver
         builder.RegisterDbContext();
         builder.Services.RegisterRepositories();
         builder.Services.RegisterServices();
+        builder.RegisterHealthChecks();
+    }
+
+    private static void RegisterHealthChecks(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddHealthChecks()
+            .AddLivenessCheck()
+            .AddDbContextCheck<DraftDbContext>(tags: ["ready"]);
     }
 
     private static void RegisterServices(this IServiceCollection services)

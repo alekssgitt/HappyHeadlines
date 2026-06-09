@@ -1,3 +1,4 @@
+using Common.Shared.Health;
 using Microsoft.EntityFrameworkCore;
 using ProfanityService.Application.Interfaces;
 using ProfanityService.Application.Interfaces.Data;
@@ -13,6 +14,14 @@ public static class DependencyResolver
         builder.RegisterDbContext();
         builder.Services.RegisterRepositories();
         builder.Services.RegisterServices();
+        builder.RegisterHealthChecks();
+    }
+
+    private static void RegisterHealthChecks(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddHealthChecks()
+            .AddLivenessCheck()
+            .AddDbContextCheck<ProfanityDbContext>(tags: ["ready"]);
     }
 
     private static void RegisterServices(this IServiceCollection services)

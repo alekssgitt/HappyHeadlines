@@ -1,3 +1,4 @@
+using Common.Shared.Health;
 using PublisherService.Application.Interfaces;
 using PublisherService.Application.Interfaces.Queue;
 using PublisherService.Infrastructure.Queue;
@@ -11,6 +12,12 @@ public static class DependencyResolver
     {
         builder.Services.RegisterQueue(builder.Configuration);
         builder.Services.RegisterServices();
+        builder.RegisterHealthChecks();
+    }
+
+    private static void RegisterHealthChecks(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddHealthChecks().AddBasicReadyCheck();
     }
 
     private static void RegisterServices(this IServiceCollection services)

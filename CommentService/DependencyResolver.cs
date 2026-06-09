@@ -1,3 +1,4 @@
+using Common.Shared.Health;
 using CommentService.Application.Interfaces;
 using CommentService.Application.Interfaces.Caching;
 using CommentService.Application.Interfaces.Data;
@@ -22,6 +23,14 @@ public static class DependencyResolver
         builder.Services.RegisterRepositories();
         builder.Services.RegisterServices();
         builder.RegisterProfanityClient();
+        builder.RegisterHealthChecks();
+    }
+
+    private static void RegisterHealthChecks(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddHealthChecks()
+            .AddLivenessCheck()
+            .AddDbContextCheck<CommentDbContext>(tags: ["ready"]);
     }
 
     private static void RegisterServices(this IServiceCollection services)

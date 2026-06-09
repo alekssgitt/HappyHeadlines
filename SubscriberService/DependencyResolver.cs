@@ -1,5 +1,7 @@
+using Common.Shared.Health;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
+using SubscriberService.Infrastructure.Health;
 using SubscriberService.Application.Interfaces;
 using SubscriberService.Application.Interfaces.Data;
 using SubscriberService.Application.Interfaces.FeatureFlags;
@@ -19,6 +21,15 @@ public static class DependencyResolver
         builder.Services.RegisterQueue(builder.Configuration);
         builder.Services.RegisterRepositories();
         builder.Services.RegisterServices();
+        builder.RegisterHealthChecks();
+    }
+
+    private static void RegisterHealthChecks(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddHealthChecks()
+            .AddLivenessCheck()
+            .AddDbContextCheck<SubscriberDbContext>(tags: ["ready"])
+            .AddCheck<ReleaseToggleReadinessCheck>("release_toggle", tags: ["ready"]);
     }
 
     private static void RegisterDbContext(this WebApplicationBuilder builder)
