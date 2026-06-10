@@ -74,6 +74,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set GHCR image owner (lowercase)
+        run: echo "GHCR_OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
       - name: Build and push ArticleService
         uses: docker/build-push-action@v6
         with:
@@ -81,8 +84,8 @@ jobs:
           file: ArticleService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-article-service:latest
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-article-service:${{ github.sha }}
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-article-service:latest
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-article-service:${{ github.sha }}
 
       - name: Build and push CommentService
         uses: docker/build-push-action@v6
@@ -91,8 +94,8 @@ jobs:
           file: CommentService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-comment-service:latest
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-comment-service:${{ github.sha }}
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-comment-service:latest
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-comment-service:${{ github.sha }}
 
       - name: Build and push ProfanityService
         uses: docker/build-push-action@v6
@@ -101,8 +104,8 @@ jobs:
           file: ProfanityService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-profanity-service:latest
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-profanity-service:${{ github.sha }}
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-profanity-service:latest
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-profanity-service:${{ github.sha }}
 
       - name: Build and push DraftService
         uses: docker/build-push-action@v6
@@ -111,8 +114,8 @@ jobs:
           file: DraftService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-draft-service:latest
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-draft-service:${{ github.sha }}
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-draft-service:latest
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-draft-service:${{ github.sha }}
 
       - name: Build and push PublisherService
         uses: docker/build-push-action@v6
@@ -121,8 +124,8 @@ jobs:
           file: PublisherService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-publisher-service:latest
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-publisher-service:${{ github.sha }}
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-publisher-service:latest
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-publisher-service:${{ github.sha }}
 
       - name: Build and push NewsletterService
         uses: docker/build-push-action@v6
@@ -131,8 +134,8 @@ jobs:
           file: NewsletterService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-newsletter-service:latest
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-newsletter-service:${{ github.sha }}
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-newsletter-service:latest
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-newsletter-service:${{ github.sha }}
 
       - name: Build and push SubscriberService
         uses: docker/build-push-action@v6
@@ -141,12 +144,13 @@ jobs:
           file: SubscriberService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-subscriber-service:latest
-            ghcr.io/${{ github.repository_owner }}/happyheadlines-subscriber-service:${{ github.sha }}
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-subscriber-service:latest
+            ghcr.io/${{ env.GHCR_OWNER }}/happyheadlines-subscriber-service:${{ github.sha }}
 
   deploy:
-    name: Deploy + health barrier
+    name: Deploy all services + health barrier
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     needs:
       - build-and-test
       - docker-delivery
@@ -193,13 +197,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy GHCR image and enforce health barrier
+      - name: Deploy all GHCR images and enforce health barrier
         id: deploy
         run: |
-          chmod +x .github/scripts/deploy-subscriber.sh
+          chmod +x .github/scripts/deploy-all.sh
           GHCR_OWNER="$(echo "$GHCR_OWNER" | tr '[:upper:]' '[:lower:]')"
           export GHCR_OWNER
-          if ./.github/scripts/deploy-subscriber.sh "$DEPLOY_SHA" "${{ steps.state.outputs.previous_sha }}"; then
+          if ./.github/scripts/deploy-all.sh "$DEPLOY_SHA" "${{ steps.state.outputs.previous_sha }}"; then
             echo "deploy_outcome=success" >> "$GITHUB_OUTPUT"
           else
             echo "deploy_outcome=rolled_back" >> "$GITHUB_OUTPUT"
