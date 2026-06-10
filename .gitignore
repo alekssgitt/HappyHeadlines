@@ -33,3 +33,8 @@ Thumbs.db
 
 ## Docker
 docker-compose.override.yml
+
+## Local exam materials, diagrams, and CI helper scripts
+structurizr/
+presentations/
+scripts/

@@ -196,10 +196,10 @@ jobs:
       - name: Deploy GHCR image and enforce health barrier
         id: deploy
         run: |
-          chmod +x scripts/ci/deploy-subscriber.sh
+          chmod +x .github/scripts/deploy-subscriber.sh
           GHCR_OWNER="$(echo "$GHCR_OWNER" | tr '[:upper:]' '[:lower:]')"
           export GHCR_OWNER
-          if ./scripts/ci/deploy-subscriber.sh "$DEPLOY_SHA" "${{ steps.state.outputs.previous_sha }}"; then
+          if ./.github/scripts/deploy-subscriber.sh "$DEPLOY_SHA" "${{ steps.state.outputs.previous_sha }}"; then
             echo "deploy_outcome=success" >> "$GITHUB_OUTPUT"
           else
             echo "deploy_outcome=rolled_back" >> "$GITHUB_OUTPUT"
@@ -216,5 +216,5 @@ jobs:
       - name: Fast rollback via release toggle
         if: steps.deploy.outputs.deploy_outcome == 'success'
         run: |
-          chmod +x scripts/ci/verify-toggle-rollback.sh
-          ./scripts/ci/verify-toggle-rollback.sh
+          chmod +x .github/scripts/verify-toggle-rollback.sh
+          ./.github/scripts/verify-toggle-rollback.sh
